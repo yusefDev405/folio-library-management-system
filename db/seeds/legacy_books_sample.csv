@@ -1,0 +1,6 @@
+isbn,title,author,category,publisher,published_year,description
+9780134685991,Effective Java,Joshua Bloch,Software Engineering,Addison-Wesley,2018,Best practices for the Java platform.
+BAD-ISBN-123,Broken Book Entry,Unknown Author,Computer Science,Test Press,2020,Should be rejected into errors CSV.
+9780596007126,Head First Design Patterns,Eric Freeman,Software Engineering,O'Reilly Media,2004,Visual guide to object-oriented design patterns.
+9780201633610,Design Patterns,Erich Gamma,Software Engineering,Addison-Wesley,1994,Elements of reusable object-oriented software.
+1234567890,Invalid Checksum Book,Test Author,Mathematics,Test Press,2010,Fails ISBN-10 checksum validation.

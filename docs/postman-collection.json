@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "Folio Library Management System API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "One example workflow per role (Public, Member, Librarian, Admin)."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
+    { "key": "memberToken", "value": "" },
+    { "key": "librarianToken", "value": "" },
+    { "key": "adminToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Public - Search Catalogue",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/books?q=Algorithms&available=true&page=1&limit=10"
+      }
+    },
+    {
+      "name": "Member - Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"nadia.student@library.local\",\n  \"password\": \"Member123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Member - View Own Loans",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+        "url": "{{baseUrl}}/me/loans"
+      }
+    },
+    {
+      "name": "Librarian - Checkout Copy",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{librarianToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/loans/checkout",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"memberId\": 3,\n  \"barcode\": \"LIB-000201\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Librarian - Return Copy",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{librarianToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/loans/return",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"barcode\": \"LIB-000101\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Admin - View Audit Log",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/audit-log?entity=loans&limit=20"
+      }
+    }
+  ]
+}

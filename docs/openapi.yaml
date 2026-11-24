@@ -1,0 +1,622 @@
+openapi: 3.0.3
+info:
+  title: Folio Library Management System API
+  version: 1.0.0
+  description: >
+    Role-based REST API for physical library collection management, transactional
+    circulation, reservations, fines, operational reports, and audit logging.
+servers:
+  - url: /api/v1
+    description: Local API v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, example: LOAN_LIMIT_REACHED }
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  path: { type: string }
+                  message: { type: string }
+    PaginationMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+paths:
+  /health:
+    get:
+      summary: Liveness and database readiness check
+      responses:
+        '200': { description: OK }
+  /auth/login:
+    post:
+      summary: Authenticate with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200': { description: Access token issued and HttpOnly refresh cookie set }
+        '401': { description: Invalid credentials }
+  /auth/refresh:
+    post:
+      summary: Rotate refresh token cookie and issue new access token
+      parameters:
+        - in: header
+          name: X-Requested-With
+          required: true
+          schema: { type: string, example: XMLHttpRequest }
+      responses:
+        '200': { description: Rotated access token }
+        '401': { description: Missing, expired, or reused refresh token }
+  /auth/logout:
+    post:
+      summary: Revoke refresh token and clear cookie
+      parameters:
+        - in: header
+          name: X-Requested-With
+          required: true
+          schema: { type: string, example: XMLHttpRequest }
+      responses:
+        '204': { description: Signed out }
+  /me:
+    get:
+      summary: Get current authenticated profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Profile }
+  /me/password:
+    patch:
+      summary: Change own password and revoke active refresh tokens
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string }
+      responses:
+        '204': { description: Password updated }
+  /books:
+    get:
+      summary: Search catalogue with FTS5 and availability counts
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: integer }
+        - in: query
+          name: author
+          schema: { type: integer }
+        - in: query
+          name: available
+          schema: { type: boolean }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [title, published_year, available_copies] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20, maximum: 50 }
+      responses:
+        '200': { description: Paginated books list }
+    post:
+      summary: Create a book record (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created book }
+  /books/{id}:
+    get:
+      summary: Get book details, authors, and individual physical copies
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Book details }
+        '404': { description: Not found }
+    patch:
+      summary: Update book metadata (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Updated book }
+  /books/{id}/copies:
+    post:
+      summary: Add a physical copy with barcode and shelf location (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '201': { description: Created copy }
+  /copies/{id}:
+    patch:
+      summary: Update copy shelf location or status (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Updated copy }
+  /authors:
+    get:
+      summary: List all authors
+      responses:
+        '200': { description: Authors list }
+    post:
+      summary: Create an author (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Author created }
+  /categories:
+    get:
+      summary: List all categories
+      responses:
+        '200': { description: Categories list }
+    post:
+      summary: Create a category (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Category created }
+  /members:
+    get:
+      summary: Search and paginate members (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Members list }
+    post:
+      summary: Register a new member and linked login (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Member created }
+  /members/{id}:
+    get:
+      summary: Get member details, active loans, and unpaid fines (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Member details }
+    patch:
+      summary: Update member status, type, or expiry (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Member updated }
+  /loans/checkout:
+    post:
+      summary: Check out a physical copy by barcode to a member (Librarian+)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [memberId, barcode]
+              properties:
+                memberId: { type: integer }
+                barcode: { type: string }
+      responses:
+        '201': { description: Loan created }
+        '409': { description: Business rule violation }
+  /loans/return:
+    post:
+      summary: Return a copy by barcode, assess overdue fine, and promote hold queue (Librarian+)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [barcode]
+              properties:
+                barcode: { type: string }
+      responses:
+        '200': { description: Returned with optional fine and reservation handoff }
+  /loans/{id}/renew:
+    post:
+      summary: Renew an active loan (Member own or Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Renewed loan }
+        '403': { description: Forbidden for another member's loan }
+  /loans:
+    get:
+      summary: List and filter loans (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Paginated loans }
+  /me/loans:
+    get:
+      summary: List own active loans (Member)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Active loans }
+  /me/loans/history:
+    get:
+      summary: List own returned loan history (Member)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Returned loans }
+  /reservations:
+    get:
+      summary: List active holds and waiting queues (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Reservations list }
+    post:
+      summary: Reserve a book with zero available copies (Member)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Reservation placed }
+  /reservations/{id}:
+    delete:
+      summary: Cancel a reservation (Member own or Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Reservation cancelled }
+  /me/reservations:
+    get:
+      summary: List own reservations with live queue position (Member)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Reservations list }
+  /me/fines:
+    get:
+      summary: List own fines (Member)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Fines list }
+  /fines:
+    get:
+      summary: List fines (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Paginated fines }
+  /fines/{id}/pay:
+    post:
+      summary: Record fine payment (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Fine marked paid }
+  /fines/{id}/waive:
+    post:
+      summary: Waive an unpaid fine (Admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Fine waived }
+  /reports/overdue:
+    get:
+      summary: Overdue loans report from v_overdue_loans (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Overdue loans }
+  /reports/popular-books:
+    get:
+      summary: Most borrowed titles per category over last year using CTE + RANK() (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Ranked books }
+  /reports/inventory:
+    get:
+      summary: Inventory breakdown by category and copy status (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Inventory report }
+  /users:
+    get:
+      summary: List user accounts (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Users list }
+    post:
+      summary: Create staff/user login (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: User created }
+  /users/{id}:
+    patch:
+      summary: Update user role or active flag (Admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: User updated }
+  /loan-policies:
+    get:
+      summary: List loan policies by member type (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Policies }
+  /loan-policies/{memberType}:
+    put:
+      summary: Update loan policy limits (Admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: memberType
+          required: true
+          schema: { type: string, enum: [student, staff, external] }
+      responses:
+        '200': { description: Updated policy }
+  /audit-log:
+    get:
+      summary: Search trigger-written audit trail (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Paginated audit entries }
+  /admin/expire-holds:
+    post:
+      summary: Manually trigger hold-expiry procedure (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Expiry counts }
+  /admin/generate-reminders:
+    post:
+      summary: Generate due-soon, overdue, and hold-ready notifications (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Created reminder count }
+  /admin/backups:
+    get:
+      summary: List saved database backup snapshots (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Backup list }
+    post:
+      summary: Create a consistent VACUUM INTO backup snapshot (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Snapshot created }
+  /admin/backups/verify:
+    post:
+      summary: Verify a backup snapshot against the live database in a scratch copy (Admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Restore verification summary }
+  /books/import-csv:
+    post:
+      summary: Validate and bulk import books from CSV text (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Dry-run validation preview }
+        '201': { description: Imported valid rows }
+  /books/{id}/reviews:
+    get:
+      summary: List reviews and average rating for a book
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Reviews summary }
+    post:
+      summary: Submit or update a member review (Member)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '201': { description: Saved review }
+  /reviews/{id}:
+    delete:
+      summary: Delete own review or moderate as Librarian+
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Review deleted }
+  /copies/{id}/history:
+    get:
+      summary: View loan history for a physical copy (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Copy loan timeline }
+  /copies/{id}/report-issue:
+    post:
+      summary: Atomically mark copy lost/damaged, close active loan, and assess fine (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Updated copy and fine details }
+  /me/reading-list:
+    get:
+      summary: List member's saved reading list (Member)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Reading list items }
+    post:
+      summary: Save or update a book on member's reading list (Member)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Saved item }
+  /me/reading-list/{bookId}:
+    patch:
+      summary: Update shelf or notes on reading list item (Member)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: bookId
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Updated item }
+    delete:
+      summary: Remove item from reading list (Member)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: bookId
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Removed }
+  /me/notifications:
+    get:
+      summary: List user notifications and unread count
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Notifications list }
+  /me/notifications/{id}/read:
+    patch:
+      summary: Mark a notification as read
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Updated notification }
+  /me/notifications/read-all:
+    post:
+      summary: Mark all user notifications as read
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Marked count }
+  /stocktakes:
+    get:
+      summary: List physical shelf stocktake sessions (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Sessions list }
+    post:
+      summary: Start a new shelf stocktake session (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created session with reconciliation }
+  /stocktakes/{id}:
+    get:
+      summary: Get live stocktake reconciliation report (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Reconciliation report }
+  /stocktakes/{id}/scan:
+    post:
+      summary: Record a scanned copy barcode in a stocktake session (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '201': { description: Scan classification }
+  /stocktakes/{id}/close:
+    post:
+      summary: Close an open stocktake session (Librarian+)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Finalized session }
+  /reports/analytics:
+    get:
+      summary: Usage and circulation analytics dashboard data (Librarian+)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Analytics payload }
+  /search/quick:
+    get:
+      summary: Quick command-palette search across books (and members/copies for staff)
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Quick search results }

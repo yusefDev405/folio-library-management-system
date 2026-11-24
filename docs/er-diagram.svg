@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 680" width="1120" height="680" font-family="system-ui, -apple-system, sans-serif">
+  <rect width="1120" height="680" fill="#F7F5F0" />
+  <text x="32" y="38" font-family="Georgia, serif" font-size="22" font-weight="700" fill="#1A1917">Folio Library System — 3NF Entity-Relationship Diagram (12 Core Tables)</text>
+  <text x="32" y="60" font-size="12" fill="#57534E">Foreign keys use ON DELETE RESTRICT for history preservation; active_copy_id &amp; active_member_book are STORED generated columns with UNIQUE indexes.</text>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1B4D3E" />
+    </marker>
+    <style>
+      .tbl { fill: #FFFFFF; stroke: #C5BEB1; stroke-width: 1.5; rx: 6; }
+      .hdr { fill: #1B4D3E; }
+      .hdr-txt { fill: #FFFFFF; font-size: 13px; font-weight: 700; }
+      .col-txt { fill: #1A1917; font-size: 11px; font-family: ui-monospace, Consolas, monospace; }
+      .edge { stroke: #1B4D3E; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .edge-lbl { fill: #57534E; font-size: 10px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <!-- Connectors -->
+  <path class="edge" d="M 210 140 L 260 140" />
+  <text class="edge-lbl" x="225" y="132">1:1</text>
+
+  <path class="edge" d="M 120 220 L 120 270" />
+  <text class="edge-lbl" x="128" y="250">1:N</text>
+
+  <path class="edge" d="M 350 250 L 350 285" />
+  <text class="edge-lbl" x="358" y="272">1:N</text>
+
+  <path class="edge" d="M 460 165 L 520 165" />
+  <text class="edge-lbl" x="480" y="157">1:N</text>
+
+  <path class="edge" d="M 700 145 L 760 145" />
+  <text class="edge-lbl" x="720" y="137">1:N</text>
+
+  <path class="edge" d="M 940 165 L 980 165 L 980 285 L 940 285" />
+  <text class="edge-lbl" x="986" y="225">1:N</text>
+
+  <path class="edge" d="M 760 320 L 700 320" />
+  <text class="edge-lbl" x="722" y="312">1:N</text>
+
+  <path class="edge" d="M 610 220 L 610 270" />
+  <text class="edge-lbl" x="618" y="250">1:N</text>
+
+  <path class="edge" d="M 460 350 L 520 350" />
+  <text class="edge-lbl" x="480" y="342">1:N</text>
+
+  <path class="edge" d="M 460 520 L 520 520" />
+  <text class="edge-lbl" x="480" y="512">1:N</text>
+
+  <path class="edge" d="M 850 400 L 850 460" />
+  <text class="edge-lbl" x="858" y="435">1:N</text>
+
+  <path class="edge" d="M 940 530 L 970 530" />
+
+  <!-- users -->
+  <rect class="tbl" x="30" y="90" width="180" height="130" />
+  <rect class="hdr" x="30" y="90" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="42" y="109">users</text>
+  <text class="col-txt" x="42" y="134">PK id</text>
+  <text class="col-txt" x="42" y="150">UQ email</text>
+  <text class="col-txt" x="42" y="166">password_hash</text>
+  <text class="col-txt" x="42" y="182">role (member|lib|admin)</text>
+  <text class="col-txt" x="42" y="198">is_active, created_at</text>
+
+  <!-- refresh_tokens -->
+  <rect class="tbl" x="30" y="270" width="180" height="115" />
+  <rect class="hdr" x="30" y="270" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="42" y="289">refresh_tokens</text>
+  <text class="col-txt" x="42" y="314">PK id</text>
+  <text class="col-txt" x="42" y="330">FK user_id</text>
+  <text class="col-txt" x="42" y="346">UQ token_hash</text>
+  <text class="col-txt" x="42" y="362">expires_at, revoked_at</text>
+
+  <!-- members -->
+  <rect class="tbl" x="260" y="90" width="200" height="160" />
+  <rect class="hdr" x="260" y="90" width="200" height="28" rx="4" />
+  <text class="hdr-txt" x="272" y="109">members</text>
+  <text class="col-txt" x="272" y="134">PK id</text>
+  <text class="col-txt" x="272" y="150">UQ FK user_id</text>
+  <text class="col-txt" x="272" y="166">UQ member_number</text>
+  <text class="col-txt" x="272" y="182">first_name, last_name</text>
+  <text class="col-txt" x="272" y="198">FK member_type</text>
+  <text class="col-txt" x="272" y="214">status, expires_at</text>
+
+  <!-- loan_policies -->
+  <rect class="tbl" x="260" y="285" width="200" height="135" />
+  <rect class="hdr" x="260" y="285" width="200" height="28" rx="4" />
+  <text class="hdr-txt" x="272" y="304">loan_policies</text>
+  <text class="col-txt" x="272" y="329">PK member_type</text>
+  <text class="col-txt" x="272" y="345">max_loans, loan_days</text>
+  <text class="col-txt" x="272" y="361">max_renewals, hold_days</text>
+  <text class="col-txt" x="272" y="377">daily_fine</text>
+  <text class="col-txt" x="272" y="393">max_unpaid_fines</text>
+
+  <!-- loans -->
+  <rect class="tbl" x="520" y="90" width="180" height="160" />
+  <rect class="hdr" x="520" y="90" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="532" y="109">loans</text>
+  <text class="col-txt" x="532" y="134">PK id</text>
+  <text class="col-txt" x="532" y="150">FK copy_id, member_id</text>
+  <text class="col-txt" x="532" y="166">checked_out_at, due_at</text>
+  <text class="col-txt" x="532" y="182">returned_at</text>
+  <text class="col-txt" x="532" y="198">renewals_count</text>
+  <text class="col-txt" x="532" y="214">UQ active_copy_id (GEN)</text>
+
+  <!-- fines -->
+  <rect class="tbl" x="520" y="270" width="180" height="130" />
+  <rect class="hdr" x="520" y="270" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="532" y="289">fines</text>
+  <text class="col-txt" x="532" y="314">PK id</text>
+  <text class="col-txt" x="532" y="330">FK loan_id, member_id</text>
+  <text class="col-txt" x="532" y="346">amount (CHECK &gt; 0)</text>
+  <text class="col-txt" x="532" y="362">reason, status</text>
+  <text class="col-txt" x="532" y="378">assessed_at, paid_at</text>
+
+  <!-- book_copies -->
+  <rect class="tbl" x="760" y="90" width="180" height="130" />
+  <rect class="hdr" x="760" y="90" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="772" y="109">book_copies</text>
+  <text class="col-txt" x="772" y="134">PK id</text>
+  <text class="col-txt" x="772" y="150">FK book_id</text>
+  <text class="col-txt" x="772" y="166">UQ barcode</text>
+  <text class="col-txt" x="772" y="182">shelf_location</text>
+  <text class="col-txt" x="772" y="198">status, acquired_at</text>
+
+  <!-- books -->
+  <rect class="tbl" x="760" y="260" width="180" height="140" />
+  <rect class="hdr" x="760" y="260" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="772" y="279">books (+ books_fts)</text>
+  <text class="col-txt" x="772" y="304">PK id</text>
+  <text class="col-txt" x="772" y="320">UQ isbn</text>
+  <text class="col-txt" x="772" y="336">title, publisher</text>
+  <text class="col-txt" x="772" y="352">published_year</text>
+  <text class="col-txt" x="772" y="368">FK category_id</text>
+
+  <!-- categories -->
+  <rect class="tbl" x="760" y="460" width="180" height="105" />
+  <rect class="hdr" x="760" y="460" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="772" y="479">categories</text>
+  <text class="col-txt" x="772" y="504">PK id</text>
+  <text class="col-txt" x="772" y="520">UQ name</text>
+  <text class="col-txt" x="772" y="536">FK parent_id (self)</text>
+
+  <!-- book_authors + authors -->
+  <rect class="tbl" x="520" y="460" width="180" height="105" />
+  <rect class="hdr" x="520" y="460" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="532" y="479">book_authors / authors</text>
+  <text class="col-txt" x="532" y="504">PK (book_id, author_id)</text>
+  <text class="col-txt" x="532" y="520">authors: PK id, name</text>
+
+  <!-- reservations -->
+  <rect class="tbl" x="260" y="460" width="200" height="150" />
+  <rect class="hdr" x="260" y="460" width="200" height="28" rx="4" />
+  <text class="hdr-txt" x="272" y="479">reservations</text>
+  <text class="col-txt" x="272" y="504">PK id</text>
+  <text class="col-txt" x="272" y="520">FK book_id, member_id</text>
+  <text class="col-txt" x="272" y="536">reserved_at, status</text>
+  <text class="col-txt" x="272" y="552">ready_at, expires_at</text>
+  <text class="col-txt" x="272" y="568">UQ active_member_book</text>
+
+  <!-- audit_log -->
+  <rect class="tbl" x="30" y="460" width="180" height="150" />
+  <rect class="hdr" x="30" y="460" width="180" height="28" rx="4" />
+  <text class="hdr-txt" x="42" y="479">audit_log</text>
+  <text class="col-txt" x="42" y="504">PK id</text>
+  <text class="col-txt" x="42" y="520">actor_user_id</text>
+  <text class="col-txt" x="42" y="536">action, entity, entity_id</text>
+  <text class="col-txt" x="42" y="552">old_data (JSON)</text>
+  <text class="col-txt" x="42" y="568">new_data (JSON)</text>
+  <text class="col-txt" x="42" y="584">created_at</text>
+</svg>

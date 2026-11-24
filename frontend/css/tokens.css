@@ -1,0 +1,64 @@
+:root {
+  color-scheme: light dark;
+
+  /* Archival Editorial + Swiss Utility Palette via light-dark() */
+  --bg: light-dark(#f7f5f0, #151412);
+  --surface: light-dark(#ffffff, #1e1c19);
+  --surface-muted: light-dark(#efece4, #282521);
+  --surface-hover: light-dark(#f2efe8, #2f2c27);
+  --border: light-dark(#ddd8ce, #3a3630);
+  --border-strong: light-dark(#c5beb1, #524c43);
+
+  --ink: light-dark(#1a1917, #f1eee7);
+  --ink-muted: light-dark(#57534e, #b8b1a5);
+  --ink-subtle: light-dark(#78716c, #8e877c);
+
+  --accent: light-dark(#1b4d3e, #5cb899);
+  --accent-hover: light-dark(#13382d, #74cca9);
+  --accent-soft: light-dark(#e6f0ec, #1b332b);
+  --accent-ink: light-dark(#ffffff, #0e1c17);
+
+  --ok: light-dark(#236b4e, #66c29d);
+  --ok-bg: light-dark(#e7f3ed, #172e24);
+  --warn: light-dark(#9a5b13, #e6a955);
+  --warn-bg: light-dark(#fbf1e2, #302414);
+  --danger: light-dark(#9b2226, #e27275);
+  --danger-hover: light-dark(#7c191c, #ee8c8f);
+  --danger-bg: light-dark(#fceae9, #36191a);
+  --neutral-bg: light-dark(#ece9e1, #2a2723);
+
+  --font-serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+}
+
+:root:has(> head > meta[name="color-scheme"][content="dark"]) {
+  color-scheme: dark;
+}
+
+:root:has(> head > meta[name="color-scheme"][content="light"]) {
+  color-scheme: light;
+}
+
+/* Optional Warm Sepia reading paper tint (light mode) */
+:root[data-paper="sepia"] {
+  --bg: light-dark(#efe6d2, #151412);
+  --surface: light-dark(#f8f2e4, #1e1c19);
+  --surface-muted: light-dark(#e6dac1, #282521);
+  --surface-hover: light-dark(#ece1ca, #2f2c27);
+  --border: light-dark(#d4c6aa, #3a3630);
+  --border-strong: light-dark(#b9a888, #524c43);
+}
